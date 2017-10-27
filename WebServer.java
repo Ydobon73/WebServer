@@ -4,23 +4,16 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 
-public class WebServer {
+public class WebServer extends Thread{
     public static void main(String[] args) throws Exception {
-        HttpServer server = HttpServer.create();
-        server.bind(new InetSocketAddress(80), 0);
-
-        HttpContext context = server.createContext("/", new EchoHandler());
-        context.setAuthenticator(new Auth());
-
-        server.setExecutor(null);
-        server.start();
-
-
-
+            HttpServer server = HttpServer.create();
+            server.bind(new InetSocketAddress(80), 0);
+            HttpContext context = server.createContext("/", new MyHandler());
+            server.setExecutor(null);
+            server.start();
     }
 
-    static class EchoHandler implements HttpHandler {
-        @Override
+    static class MyHandler implements HttpHandler {
         public void handle(HttpExchange exchange) throws IOException {
             StringBuilder builder = new StringBuilder();
 
@@ -35,13 +28,4 @@ public class WebServer {
         }
     }
 
-    static class Auth extends Authenticator {
-        @Override
-        public Result authenticate(HttpExchange httpExchange) {
-            if ("/forbidden".equals(httpExchange.getRequestURI().toString()))
-                return new Failure(403);
-            else
-                return new Success(new HttpPrincipal("c0nst", "realm"));
-        }
-    }
 }
