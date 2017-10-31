@@ -1,6 +1,9 @@
 import com.sun.net.httpserver.*;
 import java.io.*;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.TimeZone;
@@ -9,12 +12,13 @@ import static javax.imageio.ImageIO.read;
 
 
 public class WebServer extends Thread {
-
     public static void main(String[] args) throws Exception {
 
-        HttpServer server = HttpServer.create();
-        server.bind(new InetSocketAddress(80), 0);
-        HttpContext context = server.createContext("/", new MyHandler());
+        HttpServer server;
+        InetSocketAddress inetSocketAddress = new InetSocketAddress(80);
+        server = HttpServer.create();
+        server.bind(inetSocketAddress,0);
+        server.createContext("/", new MyHandler());
         server.setExecutor(null);
         server.start();
     }
@@ -22,26 +26,23 @@ public class WebServer extends Thread {
     static class MyHandler implements HttpHandler {
         public void handle(HttpExchange exchange) throws IOException {
             try {
-                // из сокета клиента берём поток входящих данных
                 InputStream is = exchange.getRequestBody();
                 read(is);
-                ///String response = "This is the response";
-                /*exchange.sendResponseHeaders(200, response.length());
-                OutputStream os = exchange.getResponseBody();
-                os.write(response.getBytes());
-                os.close();*/
-                // и оттуда же - поток данных от сервера к клиенту
-               // OutputStream os = exchange.getResponseBody();
+                System.out.println(is);
 
                 // буффер данных в 64 килобайта
                 byte buf[] = new byte[64 * 1024];
+                System.out.println(buf);
+
                 // читаем 64кб от клиента, результат - кол-во реально принятых данных
                 int r = is.read(buf);
+                System.out.println(r);
 
                 // создаём строку, содержащую полученую от клиента информацию
-                String request = new String(buf, 0,r);
+                String request = new String(buf,0,r);
+                System.out.println(request);
 
-                // получаем путь до документа (см. ниже ф-ю "getPath")
+               // получаем путь до документа (см. ниже ф-ю "getPath")
                 String path = getPath(request);
 
                 // если из запроса не удалось выделить путь, то
@@ -66,13 +67,13 @@ public class WebServer extends Thread {
                     OutputStream os = exchange.getResponseBody();
                     os.write(response.getBytes());
                     os.close();
-                    /*
-                    os.write(response.getBytes());
+
+                    //os.write(response.getBytes());
 
                     // завершаем соединение
                     os.close();
 
-                    // выход*/
+                    // выход
                     return;
                 }
 
@@ -115,11 +116,11 @@ public class WebServer extends Thread {
                     OutputStream os = exchange.getResponseBody();
                     os.write(response.getBytes());
                     os.close();
-                    /*// выводим данные:
+                   // выводим данные:
                     os.write(response.getBytes());
 
                     // завершаем соединение
-                    os.close();*/
+                    os.close();
 
                     // выход
                     return;
@@ -199,6 +200,7 @@ public class WebServer extends Thread {
         protected String getPath(String header) {
             // ищем URI, указанный в HTTP запросе
             // URI ищется только для методов POST и GET, иначе возвращается null
+            System.out.println(header);
             String URI = extract(header, "GET ", " "), path;
             if (URI == null) URI = extract(header, "POST ", " ");
             if (URI == null) return null;
