@@ -28,21 +28,8 @@ public class WebServer extends Thread {
             try {
                 InputStream is = exchange.getRequestBody();
                 read(is);
-                System.out.println(is);
 
-                // буффер данных в 64 килобайта
-                byte buf[] = new byte[64 * 1024];
-                System.out.println(buf);
-
-                // читаем 64кб от клиента, результат - кол-во реально принятых данных
-                int r = is.read(buf);
-                System.out.println(r);
-
-                // создаём строку, содержащую полученую от клиента информацию
-                String request = new String(buf,0,r);
-                System.out.println(request);
-
-               // получаем путь до документа (см. ниже ф-ю "getPath")
+                String request = exchange.getRequestURI().toString();
                 String path = getPath(request);
 
                 // если из запроса не удалось выделить путь, то
@@ -131,7 +118,7 @@ public class WebServer extends Thread {
                 String mime = "text/plain";
 
                 // выделяем у файла расширение (по точке)
-                r = path.lastIndexOf(".");
+                int r = path.lastIndexOf(".");
                 if (r > 0) {
                     String ext = path.substring(r);
                     if (ext.equalsIgnoreCase("html"))
@@ -197,41 +184,35 @@ public class WebServer extends Thread {
 
         // "вырезает" из HTTP заголовка URI ресурса и конвертирует его в filepath
         // URI берётся только для GET и POST запросов, иначе возвращается null
-        protected String getPath(String header) {
+        protected String getPath(String request) {
             // ищем URI, указанный в HTTP запросе
             // URI ищется только для методов POST и GET, иначе возвращается null
-            System.out.println(header);
-            String URI = extract(header, "GET ", " "), path;
-            if (URI == null) URI = extract(header, "POST ", " ");
-            if (URI == null) return null;
+            String  path;
+            if (request == null) return null;
 
             // если URI записан вместе с именем протокола
             // то удаляем протокол и имя хоста
-            path = URI.toLowerCase();
+            path = request.toLowerCase();
             if (path.indexOf("http://", 0) == 0) {
-                URI = URI.substring(7);
-                URI = URI.substring(URI.indexOf("/", 0));
+                request = request.substring(7);
+                request = request.substring(request.indexOf("/", 0));
             } else if (path.indexOf("/", 0) == 0)
-                URI = URI.substring(1); // если URI начинается с символа /, удаляем его
+                request = request.substring(1); // если URI начинается с символа /, удаляем его
 
-            // отсекаем из URI часть запроса, идущего после символов ? и #
-            int i = URI.indexOf("?");
-            if (i > 0) URI = URI.substring(0, i);
-            i = URI.indexOf("#");
-            if (i > 0) URI = URI.substring(0, i);
+
 
             // конвертируем URI в путь до документов
-            // предполагается, что документы лежат там же, где и сервер
-            // иначе ниже нужно переопределить path
-            path = "." + File.separator;
+            // предполагается, что документы лежат в папке C://www/
+            path = "C:\\\\www" + File.separator;
             char a;
-            for (i = 0; i < URI.length(); i++) {
-                a = URI.charAt(i);
+            for (int i = 0; i < request.length(); i++) {
+                a = request.charAt(i);
                 if (a == '/')
                     path = path + File.separator;
                 else
                     path = path + a;
             }
+
 
             return path;
         }
@@ -253,4 +234,3 @@ public class WebServer extends Thread {
         }
     }
 }
-
