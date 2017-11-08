@@ -1,9 +1,6 @@
 import com.sun.net.httpserver.*;
 import java.io.*;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.TimeZone;
@@ -64,7 +61,7 @@ public class WebServer extends Thread {
                     return;
                 }
 
-
+                System.out.println(path);
                 // если файл существует и является директорией,
                 // то ищем индексный файл index.html
                 File f = new File(path);
@@ -162,10 +159,12 @@ public class WebServer extends Thread {
                 exchange.sendResponseHeaders(200, response.length());
                 OutputStream os = exchange.getResponseBody();
                 os.write(response.getBytes());
-                //os.close();
-                //os.write(response.getBytes());
+
+                /*os.close();
+                os.write(response.getBytes());*/
 
                 // и сам файл:
+                byte buf[] = new byte[64 * 1024];
                 FileInputStream fis = new FileInputStream(path);
                 r = 1;
                 while (r > 0) {
@@ -203,7 +202,7 @@ public class WebServer extends Thread {
 
             // конвертируем URI в путь до документов
             // предполагается, что документы лежат в папке C://www/
-            path = "C:\\\\www" + File.separator;
+            path = "C:\\www" + File.separator;
             char a;
             for (int i = 0; i < request.length(); i++) {
                 a = request.charAt(i);
@@ -212,25 +211,7 @@ public class WebServer extends Thread {
                 else
                     path = path + a;
             }
-
-
             return path;
-        }
-
-
-        // "вырезает" из строки str часть, находящуюся между строками start и end
-        // если строки end нет, то берётся строка после start
-        // если кусок не найден, возвращается null
-        // для поиска берётся строка до "\n\n" или "\r\n\r\n", если таковые присутствуют
-        protected String extract(String str, String start, String end) {
-            int s = str.indexOf("\n\n", 0), e;
-            if (s < 0) s = str.indexOf("\r\n\r\n", 0);
-            if (s > 0) str = str.substring(0, s);
-            s = str.indexOf(start, 0) + start.length();
-            if (s < start.length()) return null;
-            e = str.indexOf(end, s);
-            if (e < 0) e = str.length();
-            return (str.substring(s, e)).trim();
         }
     }
 }
